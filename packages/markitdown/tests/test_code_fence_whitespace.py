@@ -46,6 +46,52 @@ def test_tilde_fence_content_is_preserved() -> None:
     result = _convert_markdown(content)
     assert "~~~text\n\n\nkept\n~~~" in result
 
+
+def test_block_quote_fence_preserves_code_whitespace() -> None:
+    content = b"> ```text\n> first  \n> \n> \n> second\n> ```\n"
+    assert _convert_markdown(content) == content.decode()
+
+
+def test_list_fence_preserves_code_whitespace() -> None:
+    content = b"- item\n\n    ```text\n    first  \n    \n    \n    second\n    ```\n"
+    assert _convert_markdown(content) == content.decode()
+
+
+def test_block_quote_fence_ends_with_its_container() -> None:
+    content = b"> ```text\n> code  \noutside  \n"
+    assert _convert_markdown(content) == "> ```text\n> code  \noutside\n"
+
+
+def test_list_fence_ends_with_its_container() -> None:
+    content = b"- item\n\n    ```text\n    code  \noutside  \n"
+    assert _convert_markdown(content) == "- item\n\n    ```text\n    code  \noutside\n"
+
+
+def test_parent_list_fence_after_nested_list_preserves_whitespace() -> None:
+    content = b"- outer\n  - inner\n\n  after\n\n    ```text\n    first  \n    ```\n"
+    assert _convert_markdown(content) == content.decode()
+
+
+def test_block_quote_inside_list_fence_preserves_whitespace() -> None:
+    content = b"- item\n\n    > ```text\n    > first  \n    > ```\n"
+    assert _convert_markdown(content) == content.decode()
+
+
+def test_block_quote_fence_adjacent_to_quote_text_keeps_layout() -> None:
+    content = b"> intro\n> ```text\n> code  \n> ```\n"
+    assert _convert_markdown(content) == content.decode()
+
+
+def test_list_fence_adjacent_to_item_text_keeps_layout() -> None:
+    content = b"- item\n  ```text\n  code  \n  ```\n"
+    assert _convert_markdown(content) == content.decode()
+
+
+def test_indented_literal_fence_does_not_hide_following_prose() -> None:
+    content = b"    ```\noutside  \n"
+    assert _convert_markdown(content) == "    ```\noutside\n"
+
+
 def test_blank_line_run_before_fence_collapses_to_one_blank_line() -> None:
     """A blank-line run immediately before a fence must collapse like prose.
 
